@@ -1,0 +1,96 @@
+name: build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: elcton
+            path: "."
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y libgl1-mesa-dev
+
+      # CLT 6.1.1.280：与工程 modelVersion 6.1.1 / faMode 匹配（勿随手升 26.x，老工程形态可能不兼容）
+      - name: Setup HarmonyOS Command Line Tools
+        id: ohos
+        uses: ErBWs/setup-ohos@v2
+        with:
+          version: 6.1.1.280
+          cache: true
+
+      - name: Ensure toolchain on PATH
+        run: |
+          for p in "$HOME/ohos-sdk/command-line-tools/bin" "$HOME/ohos-sdk/command-line-tools/tool/node/bin"; do
+            if [ -d "$p" ]; then echo "$p" >> "$GITHUB_PATH"; fi
+          done
+          if [ -d "$HOME/ohos-sdk/command-line-tools/sdk" ]; then
+            echo "HOS_SDK_HOME=$HOME/ohos-sdk/command-line-tools/sdk" >> "$GITHUB_ENV"
+          fi
+          echo "--- toolchain check ---"
+          command -v hvigorw || true
+          command -v ohpm || true
+
+      - name: Install project dependencies
+        working-directory: ${{ matrix.path }}
+        run: ohpm install --all
+
+      - name: Build unsigned App
+        working-directory: ${{ matrix.path }}
+        run: hvigorw assembleApp --mode project -p product=default -p buildMode=debug --no-daemon --accept-license
+
+      - name: Sanitize packed config.json (Lite schema)
+        run: python3 scripts/clean_config_in_app.py "${{ matrix.path }}"/build/outputs/default/*.app
+
+      # 私钥来自仓库 Secret（不入库，见 tools/sign/sign-app-to-hap.js 的 loadSignKey）
+      # 证书按项目分流（FORCE 会把 config 包名 ← 证书包名，所以**一个 p7b = 一个安装身份**）：
+      #   elcton → certs/elcton.p7b  身份 watchapp.nexus.0zzip（课程表专属，绑 FIT3，效期 2027-10）
+      #   其余   → certs/app.p7b     身份 drt.sign.yzm.nexus.jvor1（focus 用）
+      # 曾经三工程共用一张证书 → 装课程表把 memo-todo 覆盖了（2026-10-09 实测），勿再合并。
+      - name: Sign (needs certs/*.p7b)
+        env:
+          SIGN_P12_PEM: ${{ matrix.project == 'elcton' && secrets.SIGN_P12_PEM_ELCTON || secrets.SIGN_P12_PEM }}
+        run: |
+          mkdir -p dist
+          P7B=certs/app.p7b
+          if [ "${{ matrix.project }}" = "elcton" ]; then P7B=certs/elcton.p7b; fi
+          if [ -f "$P7B" ]; then
+            cp -r tools/sign /tmp/sign && cd /tmp/sign
+            npm install --no-audit --no-fund
+            cd -
+            FORCE_P7B_BUNDLE=1 node /tmp/sign/sign-app-to-hap.js "${{ matrix.path }}"/build/outputs/default/*.app "$P7B" "dist/${{ matrix.project }}.hap"
+          else
+            echo "$P7B 不存在 → 本次只交付未签名 .app"
+          fi
+
+      # ★签名闸门：key 与 p7b 证书不配对时（如 Secret 偶发取不到被表达式回退到别的身份）
+      #   直接失败、不产出 artifact —— 2026-10-10 错误30 事故的根治（结构断言查不出，必须密码学验签）
+      - name: Verify signature (fail loud)
+        run: |
+          P7B=certs/app.p7b
+          if [ "${{ matrix.project }}" = "elcton" ]; then P7B=certs/elcton.p7b; fi
+          if [ -f "dist/${{ matrix.project }}.hap" ]; then
+            python3 tools/sign/verify_sign.py "dist/${{ matrix.project }}.hap" "$P7B"
+          else
+            echo "无签名产物（仅未签名 .app），跳过验签"
+          fi
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          cp "${{ matrix.path }}"/build/outputs/default/*.app dist/ 2>/dev/null || true
+          ls -la dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.project }}-${{ github.run_number }}
+          path: dist/
+          if-no-files-found: error
