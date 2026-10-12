@@ -1,0 +1,118 @@
+/* 同步页 · 弹性布局测试版（2026-10-10）：
+ * 56/26/176/52/66 → 11%/5%/36%/11%/14%（和 77%，底部留白与原版等比）。
+ * y≥420 危险区规则在 412x484 上仍满足：底栏起点 373 + 钮 52 居中 ≈ 386-438。 */
+.container {
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    background-color: #0B0E14;
+}
+.header-bar {
+    width: 100%;
+    height: 11%;
+    flex-direction: row;
+    /* 圆屏安全区（移植方屏 69d928a 的同款修复，按 GT4 圆几何重算）：
+     * 466 圆 y≈16 文字行安全宽仅 172，左右分列(padding24) 整段落在圆外被裁 →
+     * 居中收紧：「同步+课表」总宽 106 ≤ 172(466)/167(454)/137(390) 全档在圆内 */
+    justify-content: center;
+    align-items: center;
+    padding-top: 12px;
+}
+.title {
+    font-size: 30px;
+    color: #F0F3FA;
+    /* 居中后两段相邻，留 10px 间距（同 index day-label） */
+    margin-right: 10px;
+}
+.subtitle {
+    font-size: 18px;
+    color: #99A1B8;
+}
+.endpoint-bar {
+    width: 100%;
+    height: 5%;
+    padding-left: 24px;
+    padding-right: 24px;
+    flex-direction: row;
+    align-items: center;
+    /* 圆屏：y≈55 处安全区 x≥82，左对齐(24px) URL 头部被圆弧切 → 居中（152px 宽全档在圆内） */
+    justify-content: center;
+}
+.endpoint-text {
+    font-size: 16px;
+    color: #626A80;
+}
+.probe-list {
+    width: 100%;
+    height: 36%;
+    flex-direction: column;
+}
+.probe-item {
+    width: 100%;
+    height: 44px;
+    justify-content: center;
+    align-items: center;
+}
+.probe-bg {
+    /* 圆屏收窄：首行 y≈86 安全区 x∈[52,414]，90% 时行首文字/行尾状态贴弧被裁 → 80% 全档内收 */
+    width: 80%;
+    height: 40px;
+    background-color: #171B28;
+    border-radius: 16px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 14px;
+    padding-right: 14px;
+}
+.probe-name {
+    font-size: 21px;
+    color: #F0F3FA;
+}
+.probe-status {
+    font-size: 18px;
+}
+.detail-box {
+    width: 100%;
+    height: 11%;
+    padding-left: 24px;
+    padding-right: 24px;
+    flex-direction: column;
+    justify-content: center;
+}
+.detail-text {
+    font-size: 17px;
+    color: #99A1B8;
+}
+.bottom-bar {
+    width: 100%;
+    height: 14%;
+    padding-bottom: 12px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+.nav-btn {
+    width: 36%;
+    height: 52px;
+    background-color: #6c63ff;
+    border-radius: 26px;
+    justify-content: center;
+    align-items: center;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.nav-btn-alt {
+    width: 36%;
+    height: 52px;
+    background-color: #1E2333;
+    border-radius: 26px;
+    justify-content: center;
+    align-items: center;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.nav-btn-text {
+    font-size: 24px;
+    color: #E8ECF4;
+}

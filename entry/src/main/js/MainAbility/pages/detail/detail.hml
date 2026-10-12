@@ -1,0 +1,61 @@
+<div class="page" @swipe="onSwipe">
+    <!-- 主内容：确认框弹出时整体让位，否则弹窗会被纵向 flex 排到 y=433 掉出屏幕 -->
+    <div class="main" if="{{ !showDeleteConfirm }}">
+        <div class="header-bar">
+        <text class="page-title">&#x8bfe;&#x7a0b;&#x8be6;&#x60c5;</text>
+    </div>
+    <div class="color-bar" style="background-color: {{ color }};"></div>
+    <list class="detail-list">
+        <list-item class="detail-name-item">
+            <text class="detail-name">{{ courseName }}</text>
+        </list-item>
+        <list-item class="detail-item">
+            <div class="detail-row">
+                <text class="detail-label">&#x661f;&#x671f;</text>
+                <text class="detail-value">{{ dayName }}</text>
+            </div>
+        </list-item>
+        <list-item class="detail-item">
+            <div class="detail-row">
+                <text class="detail-label">&#x65f6;&#x95f4;</text>
+                <text class="detail-value">{{ timeRange }} ({{ periodText }})</text>
+            </div>
+        </list-item>
+        <list-item class="detail-item">
+            <div class="detail-row">
+                <text class="detail-label">&#x6559;&#x5e08;</text>
+                <text class="detail-value">{{ teacher }}</text>
+            </div>
+        </list-item>
+        <list-item class="detail-item">
+            <div class="detail-row">
+                <text class="detail-label">&#x5468;&#x6b21;</text>
+                <text class="detail-value">{{ weekTypeText }}</text>
+            </div>
+        </list-item>
+        <list-item class="action-item" @click="onDelete">
+            <div class="action-btn del-btn">
+                <text class="action-btn-text">&#x5220;&#x9664;</text>
+            </div>
+        </list-item>
+    </list>
+        <div class="bottom-bar">
+            <div class="back-btn" @click="onBack">
+                <text class="back-btn-text">&#x8fd4;&#x56de;</text>
+            </div>
+        </div>
+    </div>
+    <div class="overlay" if="{{ showDeleteConfirm }}">
+        <div class="dialog">
+            <text class="dialog-title">&#x786e;&#x8ba4;&#x5220;&#x9664;&#xff1f;</text>
+            <div class="dialog-row">
+                <div class="dialog-btn dialog-cancel" @click="onCancelDelete">
+                    <text class="dialog-btn-text">&#x53d6;&#x6d88;</text>
+                </div>
+                <div class="dialog-btn dialog-confirm" @click="onConfirmDelete">
+                    <text class="dialog-btn-text">&#x5220;&#x9664;</text>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
